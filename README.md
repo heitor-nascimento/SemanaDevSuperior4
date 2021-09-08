@@ -134,3 +134,42 @@ Isso já servirá para fazer o deploy, depois disso o netlify criará um nome es
 Isso mudará o nome, mas aí voce terá que refazer o deploy para ele atualizar com um novo nome, para isso vá em: 
 
 - Deploys -> Trigger deploy
+
+</br>
+
+# Configurando backend
+
+É preciso implementar a configuração para liberar o CORS (Cross-origin Resource Sharing), que vai permitir com que a aplicação frontend hospedada no netlify se comunique com o backend que será hospedado no Heroku.
+
+Nós implementaremos uma nova classe chamada SecurityConfig dentro do src/main/java e criar um subpacote dentro do pacote que já existe lá, a classe terá o seguinte código que é padrao para implementação do CORS:
+
+    @Configuration
+    @EnableWebSecurity
+    public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+        @Autowired
+        private Environment env;
+
+        @Override
+	    protected void configure(HttpSecurity http) throws Exception {
+            if (Arrays.asList(env.getActiveProfiles()).contains("test")) {
+                http.headers().frameOptions().disable();
+            }
+            
+            http.cors().and().csrf().disable();
+            http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+            http.authorizeRequests().anyRequest().permitAll();
+	    }
+
+	    @Bean
+	    CorsConfigurationSource corsConfigurationSource() {
+            CorsConfiguration configuration = new CorsConfiguration().applyPermitDefaultValues();
+            configuration.setAllowedMethods(Arrays.asList("POST", "GET", "PUT", "DELETE", "OPTIONS"));
+            final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+            source.registerCorsConfiguration("/**", configuration);
+            return source;
+	    }
+    }
+
+Para importar as bibliotecas automaticamente é só usar o comando CTRL+SHIFT+O e quando houver conflito de bibliotecas, escolher a que não tem o reactive e as que estiverem menção ao framework spring.
+
